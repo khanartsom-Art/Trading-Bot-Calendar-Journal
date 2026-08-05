@@ -166,7 +166,17 @@
                     alert('กรุณาใส่ SCRIPT_URL ในโค้ด HTML ก่อนครับ');
                 } else {
                     const res = await fetch(SCRIPT_URL);
-                    tradeData = await res.json();
+                    const rawData = await res.json();
+                    tradeData = {};
+                    for (const key in rawData) {
+                        const d = new Date(key);
+                        if (!isNaN(d.getTime())) {
+                            const formattedKey = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+                            tradeData[formattedKey] = rawData[key];
+                        } else {
+                            tradeData[key] = rawData[key];
+                        }
+                    }
                 }
             } catch (error) {
                 console.error("โหลดข้อมูลผิดพลาด", error);
