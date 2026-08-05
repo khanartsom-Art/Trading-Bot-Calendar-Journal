@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Bot Calendar Journal</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .hidden-scrollbar::-webkit-scrollbar { display: none; }
+        .hidden-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="min-h-screen md:h-screen w-full relative bg-[#f4f0f8] text-gray-800 selection:bg-purple-200 md:overflow-hidden overflow-y-auto">
+    <!-- Abstract iOS Liquid Glass Background -->
+    <div class="absolute inset-0 overflow-hidden z-0 pointer-events-none opacity-80">
+        <div class="absolute -top-[10%] -left-[10%] w-[50vw] h-[50vw] max-w-[600px] max-h-[600px] bg-purple-600/30 rounded-full blur-[80px] mix-blend-multiply animate-pulse" style="animation-duration: 10s"></div>
+        <div class="absolute top-[20%] -right-[10%] w-[40vw] h-[40vw] max-w-[500px] max-h-[500px] bg-indigo-600/20 rounded-full blur-[90px] mix-blend-multiply animate-pulse" style="animation-duration: 12s"></div>
+        <div class="absolute -bottom-[10%] left-[20%] w-[50vw] h-[50vw] max-w-[600px] max-h-[600px] bg-violet-700/20 rounded-full blur-[100px] mix-blend-multiply animate-pulse" style="animation-duration: 14s"></div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-white/60 backdrop-blur-sm z-50 flex flex-col items-center justify-center">
+        <div class="animate-spin rounded-full h-12 w-12 border-4 border-purple-600 border-t-transparent mb-4"></div>
+        <p class="text-sm font-bold text-gray-700 tracking-wider">กำลังเชื่อมต่อฐานข้อมูล Google Sheets...</p>
+    </div>
+
+    <div class="relative z-10 w-full min-h-screen md:h-screen flex flex-col p-3 md:p-5 max-w-[1600px] mx-auto gap-3 md:gap-4">
+        <!-- Header -->
+        <header class="shrink-0 flex items-center justify-between px-2">
+            <div>
+                <h1 class="text-2xl md:text-3xl font-black tracking-tight text-gray-900 mb-0.5">Performance</h1>
+                <p class="text-xs md:text-sm text-gray-600 font-medium">Trading Bot Calendar Journal</p>
+            </div>
+            <div class="w-10 h-10 bg-white/40 backdrop-blur-md rounded-full flex items-center justify-center border border-white/60 shadow-sm">
+                <span class="w-3 h-3 bg-purple-600 rounded-full shadow-[0_0_8px_rgba(147,51,234,0.8)]"></span>
+            </div>
+        </header>
+
+        <!-- Dashboard Grid -->
+        <div class="flex-1 min-h-0 flex flex-col md:flex-row gap-3 md:gap-4 pb-4 md:pb-0">
+            
+            <!-- Left Column: Summary + Form -->
+            <div class="w-full md:w-[260px] lg:w-[300px] xl:w-[320px] shrink-0 flex flex-col gap-3 md:gap-4 overflow-y-auto hidden-scrollbar">
+                <!-- Summary -->
+                <div class="bg-white/40 backdrop-blur-2xl border border-white/60 shadow-[0_8px_32px_0_rgba(0,0,0,0.05)] rounded-3xl p-5 shrink-0">
+                    <h2 class="text-xs font-bold text-gray-500 tracking-wider uppercase mb-4">Overview</h2>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-white/50 backdrop-blur-md rounded-2xl p-3 border border-white/60">
+                            <p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Total P/L</p>
+                            <p id="totalPL" class="text-lg font-black text-gray-800">0.00</p>
+                        </div>
+                        <div class="bg-white/50 backdrop-blur-md rounded-2xl p-3 border border-white/60">
+                            <p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Win Rate</p>
+                            <p id="winRate" class="text-lg font-black text-purple-600">0.0%</p>
+                        </div>
+                        <div class="bg-white/50 backdrop-blur-md rounded-2xl p-3 border border-white/60">
+                            <p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Win / Loss</p>
+                            <p id="winLossCount" class="text-lg font-black text-gray-800">0 / 0</p>
+                        </div>
+                        <div class="bg-white/50 backdrop-blur-md rounded-2xl p-3 border border-white/60">
+                            <p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Recorded</p>
+                            <p id="totalDaysRecorded" class="text-lg font-black text-purple-600">0 วัน</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Trade Form -->
+                <div class="bg-white/40 backdrop-blur-2xl border border-white/60 shadow-[0_8px_32px_0_rgba(0,0,0,0.05)] rounded-3xl p-5 flex flex-col flex-1 min-h-0">
+                    <div class="mb-4 flex items-start justify-between">
+                        <div>
+                            <h2 class="text-xs font-bold text-gray-500 tracking-wider uppercase">Daily Log</h2>
+                            <p id="formTitle" class="text-sm font-semibold text-gray-800 mt-1">เลือกวันที่บนปฏิทิน</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button type="button" id="deleteBtn" onclick="deleteTradeData()" class="hidden p-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 rounded-xl transition shadow-sm active:scale-95 cursor-pointer" title="ลบข้อมูล">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                            </button>
+                            <button type="button" id="submitBtn" onclick="saveTradeData()" disabled class="px-4 py-2 bg-purple-600/80 backdrop-blur-xl hover:bg-purple-700/80 text-white font-semibold rounded-xl transition shadow-[0_4px_16px_0_rgba(147,51,234,0.3)] disabled:opacity-50 disabled:shadow-none active:scale-95 text-xs cursor-pointer flex items-center gap-1.5">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                                บันทึก
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <form id="tradeForm" class="space-y-4 flex flex-col">
+                        <input type="hidden" id="selectedDate">
+                        <input type="hidden" id="tradeResult" value="WIN">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1.5 ml-1">ผลการเทรด</label>
+                            <div class="flex bg-white/40 backdrop-blur-md p-1 rounded-2xl border border-white/60">
+                                <button type="button" id="btn-WIN" onclick="setTradeResult('WIN')" disabled class="flex-1 py-2 text-xs font-bold rounded-xl transition-all duration-200 disabled:opacity-50 bg-emerald-400 text-white shadow-sm">ชนะ</button>
+                                <button type="button" id="btn-LOSS" onclick="setTradeResult('LOSS')" disabled class="flex-1 py-2 text-xs font-bold rounded-xl transition-all duration-200 disabled:opacity-50 text-gray-500 hover:bg-white/50">แพ้</button>
+                                <button type="button" id="btn-EVEN" onclick="setTradeResult('EVEN')" disabled class="flex-1 py-2 text-xs font-bold rounded-xl transition-all duration-200 disabled:opacity-50 text-gray-500 hover:bg-white/50">เสมอ</button>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1.5 ml-1">กำไร / ขาดทุนสุทธิ</label>
+                            <input type="number" step="any" id="tradePL" disabled placeholder="0.00" class="w-full p-2.5 bg-white/50 backdrop-blur-md border border-white/60 rounded-2xl focus:ring-2 focus:ring-purple-500/50 outline-none transition disabled:opacity-50 text-sm text-gray-700 placeholder-gray-400 shadow-sm" required>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Center Column: Calendar -->
+            <div class="flex-1 min-w-0 flex flex-col min-h-[450px] md:min-h-0">
+                <div class="bg-white/40 backdrop-blur-2xl border border-white/60 shadow-[0_8px_32px_0_rgba(0,0,0,0.05)] rounded-3xl p-4 md:p-6 flex-1 flex flex-col min-h-[350px] md:min-h-0">
+                    <div class="flex justify-between items-center mb-4 md:mb-6 px-1">
+                        <button onclick="changeMonth(-1)" class="p-2.5 bg-white/50 backdrop-blur-md hover:bg-white/70 rounded-2xl text-gray-700 transition flex items-center justify-center border border-white/60 shadow-sm active:scale-95 cursor-pointer">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                        </button>
+                        <h2 id="currentMonthYear" class="text-sm md:text-base font-black tracking-widest uppercase text-gray-800"></h2>
+                        <button onclick="changeMonth(1)" class="p-2.5 bg-white/50 backdrop-blur-md hover:bg-white/70 rounded-2xl text-gray-700 transition flex items-center justify-center border border-white/60 shadow-sm active:scale-95 cursor-pointer">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-7 gap-1 md:gap-2 text-center font-bold text-gray-400 text-[10px] md:text-xs uppercase tracking-wider mb-2 shrink-0">
+                        <div>อา</div><div>จ</div><div>อ</div><div>พ</div><div>พฤ</div><div>ศ</div><div>ส</div>
+                    </div>
+                    
+                    <div id="calendarDays" class="grid grid-cols-7 gap-1 md:gap-2 flex-1 auto-rows-fr min-h-0">
+                        <!-- Calendar Days Injected Here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Charts -->
+            <div class="w-full md:w-[260px] lg:w-[320px] xl:w-[360px] shrink-0 flex flex-col gap-3 md:gap-4 overflow-y-auto hidden-scrollbar">
+                <div class="bg-white/40 backdrop-blur-2xl border border-white/60 shadow-[0_8px_32px_0_rgba(0,0,0,0.05)] rounded-3xl p-5 flex flex-col flex-1 min-h-[240px] md:min-h-0">
+                    <h3 class="text-xs font-bold text-gray-500 tracking-wider uppercase mb-4">Cumulative P/L</h3>
+                    <div class="flex-1 min-h-0 relative">
+                        <canvas id="plChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="bg-white/40 backdrop-blur-2xl border border-white/60 shadow-[0_8px_32px_0_rgba(0,0,0,0.05)] rounded-3xl p-5 flex flex-col flex-1 min-h-[240px] md:min-h-0">
+                    <h3 class="text-xs font-bold text-gray-500 tracking-wider uppercase mb-2">Win / Loss Ratio</h3>
+                    <div class="flex-1 flex justify-center items-center min-h-0 relative">
+                        <canvas id="ratioChart"></canvas>
+                        <div id="emptyRatio" class="absolute inset-0 flex items-center justify-center text-gray-400 text-sm font-medium hidden">ไม่มีข้อมูล</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbywbwnR-o3X5Ej23COAA-DxIQg_dCe-i_XR4F4Rx54xNKvABgxmabfcGO5NJtthMmY-/exec'; 
+
+        let today = new Date();
+        let currentMonth = today.getMonth();
+        let currentYear = today.getFullYear();
+        let selectedDateStr = "";
+        let tradeData = {};
+        let plChartInstance = null;
+        let ratioChartInstance = null;
+        const monthsTh = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+
+        async function fetchInitialData() {
+            try {
+                if(SCRIPT_URL === 'YOUR_WEB_APP_URL_HERE') {
+                    alert('กรุณาใส่ SCRIPT_URL ในโค้ด HTML ก่อนครับ');
+                } else {
+                    const res = await fetch(SCRIPT_URL);
+                    tradeData = await res.json();
+                }
+            } catch (error) {
+                console.error("โหลดข้อมูลผิดพลาด", error);
+            } finally {
+                document.getElementById('loadingOverlay').style.display = 'none';
+                renderCalendar();
+                updateSummaryAndCharts();
+            }
+        }
+
+        function changeMonth(direction) {
+            currentMonth += direction;
+            if (currentMonth > 11) { currentMonth = 0; currentYear++; } 
+            else if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+            renderCalendar();
+        }
+
+        function renderCalendar() {
+            const monthYearEl = document.getElementById('currentMonthYear');
+            const calendarDaysEl = document.getElementById('calendarDays');
+            monthYearEl.innerText = `${monthsTh[currentMonth]} ${currentYear + 543}`;
+            calendarDaysEl.innerHTML = "";
+
+            const firstDayIndex = new Date(currentYear, currentMonth, 1).getDay();
+            const totalDays = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+            for (let i = 0; i < firstDayIndex; i++) {
+                const emptyDiv = document.createElement('div');
+                emptyDiv.className = "rounded-2xl";
+                calendarDaysEl.appendChild(emptyDiv);
+            }
+
+            for (let day = 1; day <= totalDays; day++) {
+                const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const dayDiv = document.createElement('div');
+                
+                let contentHTML = `<div class="flex justify-between items-start mb-0.5 md:mb-1"><span class="text-xs md:text-sm font-bold text-gray-600">${day}</span></div>`;
+                let baseClass = "p-1.5 md:p-2 border rounded-[10px] md:rounded-2xl flex flex-col cursor-pointer transition-all duration-200 overflow-hidden";
+                
+                if (tradeData[dateStr]) {
+                    const data = tradeData[dateStr];
+                    const badgeColor = data.result === 'WIN' 
+                        ? 'bg-emerald-400/20 text-emerald-700 border-emerald-400/30' 
+                        : (data.result === 'LOSS' ? 'bg-rose-400/20 text-rose-700 border-rose-400/30' : 'bg-gray-400/20 text-gray-700 border-gray-400/30');
+                    
+                    const plClass = data.pl > 0 ? "text-emerald-600" : (data.pl < 0 ? "text-rose-600" : "text-gray-600");
+                    const plText = data.pl > 0 ? `+${data.pl}` : `${data.pl}`;
+                    const resultLabel = data.result === 'WIN' ? 'W' : (data.result === 'LOSS' ? 'L' : '-');
+                    
+                    dayDiv.className = `${baseClass} ${badgeColor}`;
+                    contentHTML = `
+                        <div class="flex justify-between items-start mb-0.5 md:mb-1">
+                            <span class="text-xs md:text-sm font-bold text-inherit">${day}</span>
+                            <span class="text-[10px] px-1.5 py-0.5 rounded font-bold bg-white/50 backdrop-blur-sm">${resultLabel}</span>
+                        </div>
+                        <div class="text-xs md:text-sm font-bold truncate mt-auto ${plClass}">${plText}</div>
+                    `;
+                } else {
+                    dayDiv.className = `${baseClass} border-white/50 bg-white/30 hover:bg-white/50 backdrop-blur-sm`;
+                }
+
+                if(selectedDateStr === dateStr) {
+                    dayDiv.classList.add("ring-2", "ring-purple-600", "scale-[1.02]", "shadow-md");
+                    if(!tradeData[dateStr]) dayDiv.classList.add("border-transparent", "bg-white/60");
+                }
+
+                dayDiv.innerHTML = contentHTML;
+                dayDiv.onclick = () => selectDate(dateStr);
+                calendarDaysEl.appendChild(dayDiv);
+            }
+        }
+
+        function selectDate(dateStr) {
+            selectedDateStr = dateStr;
+            document.getElementById('selectedDate').value = dateStr;
+            document.getElementById('formTitle').innerText = `วันที่ ${dateStr}`;
+            
+            // Enable form elements
+            document.getElementById('tradePL').disabled = false;
+            document.getElementById('submitBtn').disabled = false;
+            ['WIN', 'LOSS', 'EVEN'].forEach(r => document.getElementById(`btn-${r}`).disabled = false);
+
+            if (tradeData[dateStr]) {
+                setTradeResult(tradeData[dateStr].result);
+                document.getElementById('tradePL').value = tradeData[dateStr].pl;
+                document.getElementById('deleteBtn').classList.remove('hidden');
+            } else {
+                setTradeResult('WIN');
+                document.getElementById('tradePL').value = '';
+                document.getElementById('deleteBtn').classList.add('hidden');
+            }
+            renderCalendar();
+        }
+
+        function setTradeResult(result) {
+            document.getElementById('tradeResult').value = result;
+            
+            // Reset all buttons
+            ['WIN', 'LOSS', 'EVEN'].forEach(r => {
+                const btn = document.getElementById(`btn-${r}`);
+                btn.className = "flex-1 py-2 text-xs font-bold rounded-xl transition-all duration-200 text-gray-500 hover:bg-white/50";
+            });
+            
+            // Set active button
+            const activeBtn = document.getElementById(`btn-${result}`);
+            if (result === 'WIN') {
+                activeBtn.className = "flex-1 py-2 text-xs font-bold rounded-xl transition-all duration-200 bg-emerald-400 text-white shadow-sm";
+            } else if (result === 'LOSS') {
+                activeBtn.className = "flex-1 py-2 text-xs font-bold rounded-xl transition-all duration-200 bg-rose-400 text-white shadow-sm";
+            } else {
+                activeBtn.className = "flex-1 py-2 text-xs font-bold rounded-xl transition-all duration-200 bg-gray-400 text-white shadow-sm";
+            }
+        }
+
+        async function saveTradeData() {
+            if (!selectedDateStr) {
+                alert("กรุณาเลือกวันที่บนปฏิทินก่อนครับ");
+                return;
+            }
+
+            const result = document.getElementById('tradeResult').value;
+            const plVal = document.getElementById('tradePL').value;
+            if(!plVal) {
+                alert("กรุณากรอกกำไร/ขาดทุน");
+                return;
+            }
+            let pl = parseFloat(plVal);
+            
+            if (result === 'WIN') {
+                pl = Math.abs(pl);
+            } else if (result === 'LOSS') {
+                pl = -Math.abs(pl);
+            } else if (result === 'EVEN') {
+                pl = 0;
+            }
+
+            const btn = document.getElementById('submitBtn');
+            btn.innerHTML = `<div class="animate-spin rounded-full h-3.5 w-3.5 border-2 border-white border-t-transparent"></div> บันทึก`;
+            btn.disabled = true;
+
+            try {
+                // ส่ง action: 'save' ไปเพื่อให้ Apps Script รับทราบว่าเป็นการบันทึก (พร้อมส่ง Note ว่างๆ กลับไปเพื่อความเข้ากันได้)
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: 'save', dateStr: selectedDateStr, result, pl, note: "" })
+                });
+
+                tradeData[selectedDateStr] = { result, pl };
+                selectDate(selectedDateStr);
+                updateSummaryAndCharts();
+                
+            } catch (error) {
+                console.error(error);
+                alert("บันทึกข้อมูลล้มเหลว โปรดเช็คการตั้งค่า Web App");
+            } finally {
+                btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> บันทึก`;
+                btn.disabled = false;
+            }
+        }
+
+        async function deleteTradeData() {
+            if (!selectedDateStr || !tradeData[selectedDateStr]) return;
+            
+            if(!confirm(`ต้องการลบข้อมูลของวันที่ ${selectedDateStr} ใช่หรือไม่?`)) return;
+
+            const delBtn = document.getElementById('deleteBtn');
+            delBtn.disabled = true;
+            delBtn.classList.add('opacity-50');
+
+            try {
+                // ส่ง action: 'delete' ไปยัง Apps Script 
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: 'delete', dateStr: selectedDateStr })
+                });
+
+                delete tradeData[selectedDateStr];
+                document.getElementById('deleteBtn').classList.add('hidden');
+                document.getElementById('tradePL').value = '';
+                renderCalendar();
+                updateSummaryAndCharts();
+                
+            } catch (error) {
+                console.error(error);
+                alert("ลบข้อมูลล้มเหลว");
+            } finally {
+                delBtn.disabled = false;
+                delBtn.classList.remove('opacity-50');
+            }
+        }
+
+        function updateSummaryAndCharts() {
+            let totalPL = 0; let wins = 0; let losses = 0;
+            let sortedDates = Object.keys(tradeData).sort();
+            let chartLabels = []; let chartDataValues = []; let cumulativePL = 0;
+
+            sortedDates.forEach(date => {
+                let item = tradeData[date];
+                totalPL += item.pl;
+                if (item.result === 'WIN') wins++;
+                else if (item.result === 'LOSS') losses++;
+                cumulativePL += item.pl;
+                chartLabels.push(date);
+                chartDataValues.push(cumulativePL);
+            });
+
+            let winRate = (wins + losses) > 0 ? ((wins / (wins + losses)) * 100).toFixed(1) : 0;
+
+            const plEl = document.getElementById('totalPL');
+            plEl.innerText = totalPL.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            plEl.className = `text-lg font-black ${totalPL > 0 ? 'text-emerald-500' : (totalPL < 0 ? 'text-rose-500' : 'text-gray-800')}`;
+            
+            document.getElementById('winRate').innerText = `${winRate}%`;
+            document.getElementById('winLossCount').innerText = `${wins} / ${losses}`;
+            document.getElementById('totalDaysRecorded').innerText = `${Object.keys(tradeData).length} วัน`;
+
+            // Charts
+            Chart.defaults.font.family = "'Inter', sans-serif";
+            Chart.defaults.color = '#6b7280';
+            
+            const ctxPL = document.getElementById('plChart');
+            if (plChartInstance) plChartInstance.destroy();
+            
+            if (chartLabels.length === 0) {
+                ctxPL.style.display = 'none';
+                let emptyDiv = document.getElementById('emptyPL');
+                if(!emptyDiv) {
+                    emptyDiv = document.createElement('div');
+                    emptyDiv.className = 'absolute inset-0 flex items-center justify-center text-gray-400 text-sm font-medium';
+                    emptyDiv.innerText = 'ไม่มีข้อมูล';
+                    emptyDiv.id = 'emptyPL';
+                    ctxPL.parentElement.appendChild(emptyDiv);
+                }
+            } else {
+                ctxPL.style.display = 'block';
+                if(document.getElementById('emptyPL')) document.getElementById('emptyPL').remove();
+                
+                plChartInstance = new Chart(ctxPL, {
+                    type: 'line',
+                    data: {
+                        labels: chartLabels,
+                        datasets: [{ 
+                            label: 'P/L สะสม', 
+                            data: chartDataValues, 
+                            borderColor: '#9333ea', 
+                            backgroundColor: 'rgba(147, 51, 234, 0.1)', 
+                            borderWidth: 3,
+                            pointRadius: 0,
+                            pointHoverRadius: 5,
+                            pointBackgroundColor: '#9333ea',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                            fill: true, 
+                            tension: 0.4 
+                        }]
+                    },
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: 'rgba(255,255,255,0.9)',
+                                titleColor: '#374151',
+                                bodyColor: '#9333ea',
+                                borderColor: '#e5e7eb',
+                                borderWidth: 1,
+                                padding: 10,
+                                displayColors: false,
+                                titleFont: { size: 12 },
+                                bodyFont: { size: 14, weight: 'bold' }
+                            }
+                        },
+                        scales: {
+                            x: { display: false },
+                            y: { 
+                                border: { display: false },
+                                grid: { color: 'rgba(0,0,0,0.05)' },
+                                ticks: { font: { size: 10 } }
+                            }
+                        }
+                    }
+                });
+            }
+
+            const ctxRatio = document.getElementById('ratioChart');
+            const emptyRatio = document.getElementById('emptyRatio');
+            
+            if (ratioChartInstance) ratioChartInstance.destroy();
+            
+            if (wins === 0 && losses === 0) {
+                ctxRatio.style.display = 'none';
+                emptyRatio.classList.remove('hidden');
+            } else {
+                ctxRatio.style.display = 'block';
+                emptyRatio.classList.add('hidden');
+                
+                ratioChartInstance = new Chart(ctxRatio, {
+                    type: 'doughnut',
+                    data: { 
+                        labels: ['ชนะ (Win)', 'แพ้ (Loss)'], 
+                        datasets: [{ 
+                            data: [wins, losses], 
+                            backgroundColor: ['#34d399', '#fb7185'],
+                            borderWidth: 0,
+                            hoverOffset: 4
+                        }] 
+                    },
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false,
+                        cutout: '75%',
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: 'rgba(255,255,255,0.9)',
+                                titleColor: '#374151',
+                                bodyColor: '#374151',
+                                borderColor: '#e5e7eb',
+                                borderWidth: 1,
+                                padding: 10
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        window.onload = fetchInitialData;
+    </script>
+</body>
+</html>
