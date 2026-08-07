@@ -3,152 +3,335 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trading Bot Calendar Journal</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <title>Meow Trading Journal</title>
+    
+    <!-- Web Icon (Favicon) - SVG Data URI -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2222%22 fill=%22%23f3e8ff%22/><path d=%22M30 45 L 25 20 L 50 35 Z%22 fill=%22%23a855f7%22/><path d=%22M70 45 L 75 20 L 50 35 Z%22 fill=%22%23a855f7%22/><circle cx=%2250%22 cy=%2255%22 r=%2235%22 fill=%22%23a855f7%22/><path d=%22M40 55 Q 45 52 50 55 Q 55 52 60 55%22 stroke=%22%23ffffff%22 stroke-width=%224%22 fill=%22none%22 stroke-linecap=%22round%22/><circle cx=%2235%22 cy=%2245%22 r=%224.5%22 fill=%22%23ffffff%22/><circle cx=%2265%22 cy=%2245%22 r=%224.5%22 fill=%22%23ffffff%22/></svg>">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Mali:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
     <style>
-        body { font-family: 'Inter', sans-serif; }
+        body { 
+            font-family: 'Inter', 'Mali', sans-serif;
+            background-color: #faf9fd; /* Very soft, almost white purple tint */
+            color: #44403c; 
+        }
         .hidden-scrollbar::-webkit-scrollbar { display: none; }
         .hidden-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Subtle minimal background blob animation */
+        @keyframes gentle-drift {
+            0% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(15px, -15px) scale(1.03); }
+            100% { transform: translate(0, 0) scale(1); }
+        }
+        .animate-drift { animation: gentle-drift 15s infinite ease-in-out alternate; }
+        .animation-delay-2000 { animation-delay: 2s; }
+        
+        /* Premium Liquid Glass Styling - Softer and whiter */
+        .liquid-glass-panel {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 1);
+            box-shadow: 
+                0 10px 40px -10px rgba(168, 85, 247, 0.12), /* เพิ่มเงาสีม่วงให้ชัดขึ้น */
+                0 2px 10px rgba(0, 0, 0, 0.02), /* เงาดำบางๆ ให้กรอบชัด */
+                inset 0 0 0 1px rgba(255, 255, 255, 0.8); 
+            border-radius: 36px;
+        }
+
+        .liquid-glass-input {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(231, 229, 228, 0.8);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.01);
+            border-radius: 20px;
+        }
+        .liquid-glass-input:focus {
+            background: #ffffff;
+            border-color: #c084fc;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(192, 132, 252, 0.2);
+        }
+
+        /* Waving Paw Animations */
+        @keyframes wave-paw-left {
+            0%, 100% { transform: rotate(0deg); }
+            50% { transform: rotate(-30deg); }
+        }
+        @keyframes wave-paw-right {
+            0%, 100% { transform: rotate(0deg); }
+            50% { transform: rotate(30deg); }
+        }
+        .waving-paw-left { transform-origin: 80% 80%; animation: wave-paw-left 1.2s infinite ease-in-out; }
+        .waving-paw-right { transform-origin: 20% 80%; animation: wave-paw-right 1.4s infinite ease-in-out; }
+
+        @keyframes cat-float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        .cat-float { animation: cat-float 3.5s infinite ease-in-out; }
+        
+        /* Cute Speech Bubble - ปรับกรอบให้ชัดขึ้น */
+        .speech-bubble {
+            background: #ffffff;
+            border: 2px solid rgba(192, 132, 252, 0.6); /* ขอบสีม่วงให้ชัดขึ้น */
+            box-shadow: 0 8px 20px rgba(168, 85, 247, 0.12);
+            border-radius: 24px 24px 24px 4px; /* flat bottom left corner */
+            position: relative;
+        }
     </style>
 </head>
-<body class="min-h-screen md:h-screen w-full relative bg-[#f4f0f8] text-gray-800 selection:bg-purple-200 md:overflow-hidden overflow-y-auto">
-    <!-- Abstract iOS Liquid Glass Background -->
-    <div class="absolute inset-0 overflow-hidden z-0 pointer-events-none opacity-80">
-        <div class="absolute -top-[10%] -left-[10%] w-[50vw] h-[50vw] max-w-[600px] max-h-[600px] bg-purple-600/30 rounded-full blur-[80px] mix-blend-multiply animate-pulse" style="animation-duration: 10s"></div>
-        <div class="absolute top-[20%] -right-[10%] w-[40vw] h-[40vw] max-w-[500px] max-h-[500px] bg-indigo-600/20 rounded-full blur-[90px] mix-blend-multiply animate-pulse" style="animation-duration: 12s"></div>
-        <div class="absolute -bottom-[10%] left-[20%] w-[50vw] h-[50vw] max-w-[600px] max-h-[600px] bg-violet-700/20 rounded-full blur-[100px] mix-blend-multiply animate-pulse" style="animation-duration: 14s"></div>
+<body class="min-h-screen md:h-screen w-full relative selection:bg-purple-100 md:overflow-hidden overflow-y-auto">
+    <!-- Minimal Abstract Pastel Background -->
+    <div class="fixed inset-0 z-0 pointer-events-none overflow-hidden bg-[#faf9fd]">
+        <div class="absolute top-[-10%] right-[-5%] w-[40vw] h-[40vw] max-w-[500px] max-h-[500px] bg-purple-200/40 rounded-full blur-[100px] animate-drift"></div>
+        <div class="absolute bottom-[-15%] left-[-10%] w-[50vw] h-[50vw] max-w-[600px] max-h-[600px] bg-fuchsia-100/40 rounded-full blur-[120px] animate-drift animation-delay-2000"></div>
     </div>
 
     <!-- Loading Overlay -->
-    <div id="loadingOverlay" class="fixed inset-0 bg-white/60 backdrop-blur-sm z-50 flex flex-col items-center justify-center">
-        <div class="animate-spin rounded-full h-12 w-12 border-4 border-purple-600 border-t-transparent mb-4"></div>
-        <p class="text-sm font-bold text-gray-700 tracking-wider">กำลังเชื่อมต่อฐานข้อมูล Google Sheets...</p>
+    <div id="loadingOverlay" class="fixed inset-0 bg-white/80 backdrop-blur-md z-50 flex flex-col items-center justify-center transition-opacity duration-300">
+        <svg viewBox="0 0 100 100" class="w-20 h-20 animate-bounce mb-4">
+            <circle cx="50" cy="50" r="45" fill="#f3e8ff"/>
+            <path d="M30 40 L 25 15 L 45 30 Z" fill="#c084fc"/>
+            <path d="M70 40 L 75 15 L 55 30 Z" fill="#c084fc"/>
+            <path d="M40 55 Q 45 52 50 55 Q 55 52 60 55" stroke="#7e22ce" stroke-width="4" fill="none" stroke-linecap="round"/>
+        </svg>
+        <p class="text-sm font-bold text-purple-600 tracking-wider">กำลังปลุกน้องแมว...</p>
     </div>
 
-    <div class="relative z-10 w-full min-h-screen md:h-screen flex flex-col p-3 md:p-5 max-w-[1600px] mx-auto gap-3 md:gap-4">
-        <!-- Header -->
-        <header class="shrink-0 flex items-center justify-between px-2">
-            <div>
-                <h1 class="text-2xl md:text-3xl font-black tracking-tight text-gray-900 mb-0.5">Performance</h1>
-                <p class="text-xs md:text-sm text-gray-600 font-medium">Trading Bot Calendar Journal</p>
+    <div class="relative z-10 w-full min-h-screen md:h-screen flex flex-col p-2 md:p-4 max-w-[1600px] mx-auto gap-3">
+        
+        <!-- Top Header & Horizontal Overview Bar -->
+        <header class="shrink-0 flex flex-col xl:flex-row items-center justify-between gap-3 w-full">
+            
+            <!-- Logo & Cat 1 Area -->
+            <div class="flex items-center gap-3 w-full xl:w-auto shrink-0 px-2">
+                <!-- Cat 1: Cute Purple Fortune Cat (Waving Left) -->
+                <div class="w-14 h-14 md:w-16 md:h-16 flex items-center justify-center relative cat-float shrink-0">
+                    <svg viewBox="0 0 120 120" class="w-full h-full drop-shadow-md">
+                        <!-- Body -->
+                        <path d="M 25,100 C 15,60 105,60 95,100 Z" fill="#9333ea"/>
+                        <path d="M 40,100 C 35,75 85,75 80,100 Z" fill="#ffffff"/>
+                        <!-- Ears -->
+                        <path d="M 25,50 L 20,20 L 45,35 Z" fill="#7e22ce"/>
+                        <path d="M 28,45 L 25,26 L 40,36 Z" fill="#fbcfe8"/>
+                        <path d="M 95,50 L 100,20 L 75,35 Z" fill="#7e22ce"/>
+                        <path d="M 92,45 L 95,26 L 80,36 Z" fill="#fbcfe8"/>
+                        <!-- Head -->
+                        <circle cx="60" cy="55" r="35" fill="#9333ea"/>
+                        <!-- Face -->
+                        <path d="M 42,50 Q 47,43 52,50" stroke="#ffffff" stroke-width="3" fill="none" stroke-linecap="round"/>
+                        <path d="M 68,50 Q 73,43 78,50" stroke="#ffffff" stroke-width="3" fill="none" stroke-linecap="round"/>
+                        <circle cx="60" cy="58" r="3" fill="#ffffff"/>
+                        <path d="M 52,65 Q 60,72 68,65" stroke="#fbcfe8" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                        <!-- Whiskers -->
+                        <line x1="25" y1="52" x2="33" y2="54" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"/>
+                        <line x1="23" y1="58" x2="31" y2="58" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"/>
+                        <line x1="87" y1="54" x2="95" y2="52" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"/>
+                        <line x1="89" y1="58" x2="97" y2="58" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"/>
+                        <!-- Collar & Bell -->
+                        <path d="M 32,72 Q 60,85 88,72" stroke="#ef4444" stroke-width="7" fill="none" stroke-linecap="round"/>
+                        <circle cx="60" cy="80" r="9" fill="#fbbf24"/>
+                        <line x1="60" y1="85" x2="60" y2="89" stroke="#b45309" stroke-width="2"/>
+                        <!-- Right Paw (Resting) -->
+                        <path d="M 85,82 C 100,82 105,95 95,105 C 85,110 75,95 75,92 Z" fill="#9333ea"/>
+                        <!-- Left Paw (Waving) -->
+                        <g class="waving-paw-left">
+                            <path d="M 35,82 C 15,70 5,35 15,25 C 25,15 40,40 40,62" fill="#9333ea"/>
+                            <ellipse cx="20" cy="32" rx="4.5" ry="6" fill="#ffffff" transform="rotate(-30 20 32)"/>
+                        </g>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-xl md:text-3xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-purple-500 to-indigo-500">Meow Trading</h1>
+                    <p class="text-[10px] md:text-xs text-stone-500 font-medium tracking-wide mt-0.5 ml-1">
+                        ระบบบันทึกปลาทู 🌸
+                    </p>
+                </div>
             </div>
-            <div class="w-10 h-10 bg-white/40 backdrop-blur-md rounded-full flex items-center justify-center border border-white/60 shadow-sm">
-                <span class="w-3 h-3 bg-purple-600 rounded-full shadow-[0_0_8px_rgba(147,51,234,0.8)]"></span>
+
+            <!-- Horizontal Overview Panel -->
+            <div class="liquid-glass-panel p-2.5 md:p-4 w-full xl:flex-1 shrink-0 rounded-[28px] md:rounded-[36px]">
+                <div class="flex items-center gap-2 mb-2 px-2">
+                    <svg class="w-4 h-4 md:w-5 md:h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                    <h2 class="text-xs md:text-sm font-bold text-stone-600 tracking-wider uppercase">สรุปปลาทูรวม</h2>
+                </div>
+                <!-- Grid layout for stats -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
+                    <div class="bg-white/60 rounded-xl md:rounded-2xl p-2.5 md:p-3 border border-white shadow-sm flex flex-col justify-center">
+                        <p class="text-[9px] md:text-[10px] font-bold text-stone-400 uppercase tracking-wider mb-0.5">Total P/L</p>
+                        <p id="totalPL" class="text-lg md:text-xl font-black text-stone-700 leading-none mt-1">0.00</p>
+                    </div>
+                    <div class="bg-purple-50/70 rounded-xl md:rounded-2xl p-2.5 md:p-3 border border-purple-100 shadow-sm flex flex-col justify-center">
+                        <p class="text-[9px] md:text-[10px] font-bold text-purple-400/80 uppercase tracking-wider mb-0.5">Win Rate</p>
+                        <p id="winRate" class="text-lg md:text-xl font-black text-purple-600 leading-none mt-1">0.0%</p>
+                    </div>
+                    <div class="bg-white/60 rounded-xl md:rounded-2xl p-2.5 md:p-3 border border-white shadow-sm flex flex-col justify-center">
+                        <p class="text-[9px] md:text-[10px] font-bold text-stone-400 uppercase tracking-wider mb-0.5">Win / Loss</p>
+                        <p id="winLossCount" class="text-lg md:text-xl font-black text-stone-600 leading-none mt-1">0 / 0</p>
+                    </div>
+                    <div class="bg-white/60 rounded-xl md:rounded-2xl p-2.5 md:p-3 border border-white shadow-sm flex flex-col justify-center">
+                        <p class="text-[9px] md:text-[10px] font-bold text-stone-400 uppercase tracking-wider mb-0.5">Recorded</p>
+                        <p id="totalDaysRecorded" class="text-lg md:text-xl font-black text-stone-600 leading-none mt-1">0 วัน</p>
+                    </div>
+                </div>
             </div>
         </header>
 
-        <!-- Dashboard Grid -->
-        <div class="flex-1 min-h-0 flex flex-col md:flex-row gap-3 md:gap-4 pb-4 md:pb-0">
+        <!-- Dashboard Content Grid -->
+        <div class="flex-1 min-h-0 flex flex-col md:flex-row gap-3 pb-3 md:pb-0">
             
-            <!-- Left Column: Summary + Form -->
-            <div class="w-full md:w-[260px] lg:w-[300px] xl:w-[320px] shrink-0 flex flex-col gap-3 md:gap-4 overflow-y-auto hidden-scrollbar">
-                <!-- Summary -->
-                <div class="bg-white/40 backdrop-blur-2xl border border-white/60 shadow-[0_8px_32px_0_rgba(0,0,0,0.05)] rounded-3xl p-5 shrink-0">
-                    <h2 class="text-xs font-bold text-gray-500 tracking-wider uppercase mb-4">Overview</h2>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div class="bg-white/50 backdrop-blur-md rounded-2xl p-3 border border-white/60">
-                            <p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Total P/L</p>
-                            <p id="totalPL" class="text-lg font-black text-gray-800">0.00</p>
-                        </div>
-                        <div class="bg-white/50 backdrop-blur-md rounded-2xl p-3 border border-white/60">
-                            <p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Win Rate</p>
-                            <p id="winRate" class="text-lg font-black text-purple-600">0.0%</p>
-                        </div>
-                        <div class="bg-white/50 backdrop-blur-md rounded-2xl p-3 border border-white/60">
-                            <p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Win / Loss</p>
-                            <p id="winLossCount" class="text-lg font-black text-gray-800">0 / 0</p>
-                        </div>
-                        <div class="bg-white/50 backdrop-blur-md rounded-2xl p-3 border border-white/60">
-                            <p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Recorded</p>
-                            <p id="totalDaysRecorded" class="text-lg font-black text-purple-600">0 วัน</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Trade Form -->
-                <div class="bg-white/40 backdrop-blur-2xl border border-white/60 shadow-[0_8px_32px_0_rgba(0,0,0,0.05)] rounded-3xl p-5 flex flex-col flex-1 min-h-0">
+            <!-- Left Column: Trade Form & Quote -->
+            <div class="w-full md:w-[260px] lg:w-[280px] xl:w-[320px] shrink-0 flex flex-col gap-3 overflow-y-auto hidden-scrollbar">
+                
+                <!-- Trade Form Panel -->
+                <div class="liquid-glass-panel p-4 md:p-5 flex flex-col rounded-[28px] shrink-0">
                     <div class="mb-4 flex items-start justify-between">
                         <div>
-                            <h2 class="text-xs font-bold text-gray-500 tracking-wider uppercase">Daily Log</h2>
-                            <p id="formTitle" class="text-sm font-semibold text-gray-800 mt-1">เลือกวันที่บนปฏิทิน</p>
+                            <h2 class="text-[10px] md:text-xs font-bold text-stone-400 tracking-wider uppercase flex items-center gap-1.5 mb-1">
+                                <svg class="w-3.5 h-3.5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                บันทึกรายวัน
+                            </h2>
+                            <p id="formTitle" class="text-sm md:text-base font-bold text-stone-700">จิ้มวันที่บนปฏิทิน 🗓️</p>
                         </div>
                         <div class="flex items-center gap-2">
-                            <button type="button" id="deleteBtn" onclick="deleteTradeData()" class="hidden p-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 rounded-xl transition shadow-sm active:scale-95 cursor-pointer" title="ลบข้อมูล">
+                            <button type="button" id="deleteBtn" onclick="deleteTradeData()" class="hidden p-2 bg-rose-50 hover:bg-rose-100 text-rose-500 rounded-lg transition shadow-sm active:scale-95 cursor-pointer border border-rose-100" title="ลบข้อมูล">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
-                            </button>
-                            <button type="button" id="submitBtn" onclick="saveTradeData()" disabled class="px-4 py-2 bg-purple-600/80 backdrop-blur-xl hover:bg-purple-700/80 text-white font-semibold rounded-xl transition shadow-[0_4px_16px_0_rgba(147,51,234,0.3)] disabled:opacity-50 disabled:shadow-none active:scale-95 text-xs cursor-pointer flex items-center gap-1.5">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-                                บันทึก
                             </button>
                         </div>
                     </div>
                     
-                    <form id="tradeForm" class="space-y-4 flex flex-col">
+                    <form id="tradeForm" class="space-y-3 md:space-y-4 flex flex-col shrink-0">
                         <input type="hidden" id="selectedDate">
                         <input type="hidden" id="tradeResult" value="WIN">
                         <div>
-                            <label class="block text-xs font-semibold text-gray-600 mb-1.5 ml-1">ผลการเทรด</label>
-                            <div class="flex bg-white/40 backdrop-blur-md p-1 rounded-2xl border border-white/60">
-                                <button type="button" id="btn-WIN" onclick="setTradeResult('WIN')" disabled class="flex-1 py-2 text-xs font-bold rounded-xl transition-all duration-200 disabled:opacity-50 bg-emerald-400 text-white shadow-sm">ชนะ</button>
-                                <button type="button" id="btn-LOSS" onclick="setTradeResult('LOSS')" disabled class="flex-1 py-2 text-xs font-bold rounded-xl transition-all duration-200 disabled:opacity-50 text-gray-500 hover:bg-white/50">แพ้</button>
-                                <button type="button" id="btn-EVEN" onclick="setTradeResult('EVEN')" disabled class="flex-1 py-2 text-xs font-bold rounded-xl transition-all duration-200 disabled:opacity-50 text-gray-500 hover:bg-white/50">เสมอ</button>
+                            <label class="block text-[10px] md:text-xs font-bold text-stone-500 mb-1.5 ml-1">ผลประกอบการเหมียว</label>
+                            <div class="flex bg-white/70 p-1 rounded-2xl border border-white shadow-inner gap-1">
+                                <button type="button" id="btn-WIN" onclick="setTradeResult('WIN')" disabled class="flex-1 py-2 md:py-2.5 text-xs font-bold rounded-[14px] transition-all duration-300 disabled:opacity-50 bg-[#86efac] text-emerald-900 shadow-sm border border-emerald-300">กำไร 😸</button>
+                                <button type="button" id="btn-LOSS" onclick="setTradeResult('LOSS')" disabled class="flex-1 py-2 md:py-2.5 text-xs font-bold rounded-[14px] transition-all duration-300 disabled:opacity-50 text-stone-500 hover:bg-white/80">ขาดทุน 😿</button>
+                                <button type="button" id="btn-EVEN" onclick="setTradeResult('EVEN')" disabled class="flex-1 py-2 md:py-2.5 text-xs font-bold rounded-[14px] transition-all duration-300 disabled:opacity-50 text-stone-500 hover:bg-white/80">เสมอ 😼</button>
                             </div>
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-gray-600 mb-1.5 ml-1">กำไร / ขาดทุนสุทธิ</label>
-                            <input type="number" step="any" id="tradePL" disabled placeholder="0.00" class="w-full p-2.5 bg-white/50 backdrop-blur-md border border-white/60 rounded-2xl focus:ring-2 focus:ring-purple-500/50 outline-none transition disabled:opacity-50 text-sm text-gray-700 placeholder-gray-400 shadow-sm" required>
+                            <label class="block text-[10px] md:text-xs font-bold text-stone-500 mb-1.5 ml-1">จำนวนปลาทูสุทธิ (P/L)</label>
+                            <div class="relative">
+                                <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400 font-bold text-sm">฿</span>
+                                <input type="number" step="any" id="tradePL" disabled placeholder="0.00" class="w-full pl-8 pr-3 py-2.5 md:py-3 liquid-glass-input transition-all disabled:opacity-50 text-sm md:text-base font-bold placeholder:font-normal" required>
+                            </div>
                         </div>
+                        
+                        <button type="button" id="submitBtn" onclick="saveTradeData()" disabled class="w-full py-3 md:py-3.5 mt-1 bg-[#a855f7] hover:bg-[#9333ea] text-white font-bold rounded-[18px] transition-all shadow-[0_4px_15px_rgba(168,85,247,0.3)] disabled:opacity-50 disabled:shadow-none active:scale-95 text-xs md:text-sm cursor-pointer flex items-center justify-center gap-2 group border border-purple-400">
+                            <svg class="group-hover:rotate-12 transition-transform" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                            บันทึกอุ้งเท้า 🐾
+                        </button>
                     </form>
+                </div>
+
+                <!-- แมวและคำคม (ปรับขนาดให้ใหญ่ขึ้น และชิดขึ้น) -->
+                <div class="flex items-start gap-3 relative mt-2 pt-2 px-1">
+                    <!-- Cat 2: ขยายขนาด -->
+                    <div class="w-20 h-20 md:w-24 md:h-24 shrink-0 relative z-10 cat-float cursor-pointer drop-shadow-lg" onclick="randomizeQuote()" title="จิ้มเพื่อเปลี่ยนคำคม">
+                        <svg viewBox="0 0 100 100" class="w-full h-full">
+                            <!-- Body -->
+                            <path d="M 30,90 C 30,50 70,50 70,90 Z" fill="#c084fc"/> 
+                            <!-- Belly -->
+                            <path d="M 40,90 C 40,65 60,65 60,90 Z" fill="#ffffff"/>
+                            <!-- Ears -->
+                            <path d="M 30,45 L 25,15 L 50,35 Z" fill="#c084fc"/>
+                            <path d="M 32,40 L 28,20 L 45,35 Z" fill="#ffffff"/> 
+                            <path d="M 70,45 L 75,15 L 50,35 Z" fill="#c084fc"/> 
+                            <path d="M 68,40 L 72,20 L 55,35 Z" fill="#ffffff"/> 
+                            <!-- Head -->
+                            <circle cx="50" cy="50" r="28" fill="#c084fc"/>
+                            <path d="M 50,25 Q 75,25 75,50 Q 75,75 50,75 Z" fill="#faf5ff"/> 
+                            <!-- Face Features -->
+                            <path d="M 35,48 Q 40,43 45,48" stroke="#44403c" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                            <path d="M 35,48 L 45,48" stroke="#44403c" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                            <ellipse cx="62" cy="48" rx="3" ry="4.5" fill="#44403c"/>
+                            <!-- Mouth & Nose -->
+                            <circle cx="53" cy="53" r="2.5" fill="#44403c"/>
+                            <path d="M 48,58 Q 53,62 58,58" stroke="#44403c" stroke-width="2" fill="none" stroke-linecap="round"/>
+                            <!-- Blush -->
+                            <ellipse cx="32" cy="53" rx="4.5" ry="2.5" fill="#fbcfe8"/>
+                            <ellipse cx="72" cy="53" rx="4.5" ry="2.5" fill="#fbcfe8"/>
+                            <!-- Collar -->
+                            <path d="M 35,70 Q 50,78 65,70" stroke="#f472b6" stroke-width="5" fill="none" stroke-linecap="round"/> 
+                            <circle cx="50" cy="74" r="6" fill="#fcd34d"/>
+                            <!-- Left Paw -->
+                            <path d="M 30,75 C 20,80 20,95 35,90 Z" fill="#c084fc"/>
+                            <!-- Right Paw (Waving High) -->
+                            <g class="waving-paw-right">
+                                <path d="M 65,75 C 80,70 95,35 85,25 C 75,15 60,50 60,65" fill="#c084fc"/>
+                                <ellipse cx="80" cy="32" rx="4" ry="6" fill="#ffffff" transform="rotate(30 80 32)"/>
+                            </g>
+                        </svg>
+                    </div>
+                    <!-- Speech Bubble ขยายขนาด -->
+                    <div class="speech-bubble flex-1 p-4 md:p-5 text-xs md:text-sm text-stone-700 font-bold leading-relaxed flex items-center min-h-[70px] mt-2">
+                        <span id="catQuote">กำลังอัญเชิญคำคมเหมียว... 🌸</span>
+                    </div>
                 </div>
             </div>
 
             <!-- Center Column: Calendar -->
-            <div class="flex-1 min-w-0 flex flex-col min-h-[450px] md:min-h-0">
-                <div class="bg-white/40 backdrop-blur-2xl border border-white/60 shadow-[0_8px_32px_0_rgba(0,0,0,0.05)] rounded-3xl p-4 md:p-6 flex-1 flex flex-col min-h-[350px] md:min-h-0">
-                    <div class="flex justify-between items-center mb-4 md:mb-6 px-1">
-                        <button onclick="changeMonth(-1)" class="p-2.5 bg-white/50 backdrop-blur-md hover:bg-white/70 rounded-2xl text-gray-700 transition flex items-center justify-center border border-white/60 shadow-sm active:scale-95 cursor-pointer">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            <div class="flex-1 min-w-0 flex flex-col min-h-[380px] md:min-h-0">
+                <div class="liquid-glass-panel p-3 md:p-5 flex-1 flex flex-col rounded-[28px] md:rounded-[36px]">
+                    <!-- Nav -->
+                    <div class="flex justify-between items-center mb-3 md:mb-5 px-1 shrink-0">
+                        <button onclick="changeMonth(-1)" class="w-8 h-8 md:w-10 md:h-10 bg-white/80 hover:bg-white border border-white rounded-xl md:rounded-2xl text-stone-600 transition flex items-center justify-center shadow-sm active:scale-95 cursor-pointer">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
                         </button>
-                        <h2 id="currentMonthYear" class="text-sm md:text-base font-black tracking-widest uppercase text-gray-800"></h2>
-                        <button onclick="changeMonth(1)" class="p-2.5 bg-white/50 backdrop-blur-md hover:bg-white/70 rounded-2xl text-gray-700 transition flex items-center justify-center border border-white/60 shadow-sm active:scale-95 cursor-pointer">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                        <h2 id="currentMonthYear" class="text-sm md:text-base font-black tracking-widest uppercase text-stone-700 bg-white/60 px-4 md:px-5 py-1.5 md:py-2 rounded-full border border-white"></h2>
+                        <button onclick="changeMonth(1)" class="w-8 h-8 md:w-10 md:h-10 bg-white/80 hover:bg-white border border-white rounded-xl md:rounded-2xl text-stone-600 transition flex items-center justify-center shadow-sm active:scale-95 cursor-pointer">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
                         </button>
                     </div>
 
-                    <div class="grid grid-cols-7 gap-1 md:gap-2 text-center font-bold text-gray-400 text-[10px] md:text-xs uppercase tracking-wider mb-2 shrink-0">
-                        <div>อา</div><div>จ</div><div>อ</div><div>พ</div><div>พฤ</div><div>ศ</div><div>ส</div>
+                    <!-- Header Days -->
+                    <div class="grid grid-cols-7 gap-1 md:gap-1.5 text-center font-bold text-stone-400 text-[10px] md:text-[11px] uppercase tracking-wider mb-1.5 md:mb-2 shrink-0">
+                        <div class="text-rose-400">อา</div><div>จ</div><div>อ</div><div>พ</div><div>พฤ</div><div>ศ</div><div class="text-purple-400">ส</div>
                     </div>
                     
-                    <div id="calendarDays" class="grid grid-cols-7 gap-1 md:gap-2 flex-1 auto-rows-fr min-h-0">
-                        <!-- Calendar Days Injected Here -->
+                    <!-- Grid -->
+                    <div id="calendarDays" class="grid grid-cols-7 gap-1 md:gap-1.5 flex-1 auto-rows-fr min-h-0">
+                        <!-- Injected via JS -->
                     </div>
                 </div>
             </div>
 
             <!-- Right Column: Charts -->
-            <div class="w-full md:w-[260px] lg:w-[320px] xl:w-[360px] shrink-0 flex flex-col gap-3 md:gap-4 overflow-y-auto hidden-scrollbar">
-                <div class="bg-white/40 backdrop-blur-2xl border border-white/60 shadow-[0_8px_32px_0_rgba(0,0,0,0.05)] rounded-3xl p-5 flex flex-col flex-1 min-h-[240px] md:min-h-0">
-                    <h3 class="text-xs font-bold text-gray-500 tracking-wider uppercase mb-4">Cumulative P/L</h3>
+            <div class="w-full md:w-[240px] lg:w-[280px] xl:w-[320px] shrink-0 flex flex-col gap-3 overflow-y-auto hidden-scrollbar">
+                
+                <div class="liquid-glass-panel p-4 flex flex-col flex-1 min-h-[200px] md:min-h-0 rounded-[28px]">
+                    <h3 class="text-[10px] font-bold text-stone-400 tracking-wider uppercase mb-2 md:mb-3 flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path></svg>
+                        กราฟปลาทูสะสม 📈
+                    </h3>
                     <div class="flex-1 min-h-0 relative">
                         <canvas id="plChart"></canvas>
                     </div>
                 </div>
                 
-                <div class="bg-white/40 backdrop-blur-2xl border border-white/60 shadow-[0_8px_32px_0_rgba(0,0,0,0.05)] rounded-3xl p-5 flex flex-col flex-1 min-h-[240px] md:min-h-0">
-                    <h3 class="text-xs font-bold text-gray-500 tracking-wider uppercase mb-2">Win / Loss Ratio</h3>
+                <div class="liquid-glass-panel p-4 flex flex-col flex-1 min-h-[200px] md:min-h-0 rounded-[28px]">
+                    <h3 class="text-[10px] font-bold text-stone-400 tracking-wider uppercase mb-1 md:mb-2 flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path></svg>
+                        สัดส่วนการล่าเหยื่อ 🎯
+                    </h3>
                     <div class="flex-1 flex justify-center items-center min-h-0 relative">
                         <canvas id="ratioChart"></canvas>
-                        <div id="emptyRatio" class="absolute inset-0 flex items-center justify-center text-gray-400 text-sm font-medium hidden">ไม่มีข้อมูล</div>
+                        <div id="emptyRatio" class="absolute inset-0 flex items-center justify-center text-stone-400 text-xs font-bold hidden">แมวยังไม่ออกล่า</div>
                     </div>
                 </div>
-            </div>
 
+            </div>
         </div>
     </div>
 
     <script>
+        // SCRIPT_URL ต้องคงเดิม ห้ามแก้
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbywbwnR-o3X5Ej23COAA-DxIQg_dCe-i_XR4F4Rx54xNKvABgxmabfcGO5NJtthMmY-/exec'; 
 
         let today = new Date();
@@ -159,6 +342,51 @@
         let plChartInstance = null;
         let ratioChartInstance = null;
         const monthsTh = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+
+        // Random Quotes for Cat 2 (เพิ่มคำคมให้เยอะขึ้น)
+        const catQuotes = [
+            "เหมียวขอให้วันนี้ได้ปลาทูตัวใหญ่นะ! 🐟",
+            "เทรดอย่างมีสติ กำไรจะมาหาเอง 🍵",
+            "ตั้ง Stop Loss ด้วยนะ เดี๋ยวเหมียวตีมือ! 😾",
+            "เทรดเดอร์ที่ดี ต้องมีวินัยเหมือนแมวรอหนู 🐁",
+            "กราฟแดงอย่าท้อ พรุ่งนี้เหมียวจะเสกให้เขียว 🌿",
+            "พักสายตาบ้างนะเหมียว กราฟไม่หนีไปไหน 🌸",
+            "กวักโชค กวักลาภ กวักกำไรเข้าพอร์ต! ✨",
+            "เงินทุนสำคัญกว่ากำไร รักษาพอร์ตให้ดีนะ 🛡️",
+            "ขาดทุนคือบทเรียน กำไรคือรางวัล 🎀",
+            "อย่าเทรดสวนเทรนด์ เหมียวเตือนแล้วนะ! 🌊",
+            "ใจเย็นๆ รอจังหวะเหมือนเหมียวตะครุบเหยื่อ 🐾",
+            "วันนี้โชคดีเป็นของเหมียวนะ เมี้ยว! 🍀",
+            "ตลาดไม่ได้หนีไปไหน พรุ่งนี้ค่อยเทรดใหม่ก็ได้ 🐱",
+            "อย่าให้ความโลภครอบงำสติ เหมียวขอร้อง 🙏",
+            "ตัดขาดทุนให้ไว ปล่อยกำไรให้วิ่ง! 🏃‍♂️",
+            "อย่าแก้แค้นตลาด เพราะตลาดไม่เคยรู้ว่าคุณมีตัวตน 😼",
+            "แผนการเทรดคือแผนที่นำทาง อย่าหลงทางนะ 🗺️",
+            "เทรดน้อยๆ แต่เน้นๆ ดีกว่าเทรดรัวๆ จนมึน 😵‍💫",
+            "ถ้ารู้สึกเครียด ปิดจอแล้วไปเล่นกับเหมียวดีกว่า 🧶",
+            "มือใหม่จ่ายค่าเทอม มือโปรเก็บค่าเทอม 💰",
+            "ความอดทนคือสิ่งที่เทรดเดอร์ขาดไม่ได้ 🧘",
+            "อย่าซื้อเพราะหวังว่ามันจะขึ้น จงซื้อเพราะมีเหตุผล 🧠",
+            "กราฟย้อนหลังใครก็ดูออก กราฟอนาคตคือบททดสอบแท้จริง 🔮",
+            "ไม่มีกลยุทธ์ไหนชนะ 100% สำคัญที่การจัดการความเสี่ยง ⚖️",
+            "อย่าเอาเงินร้อนมาเทรด เดี๋ยวพอร์ตจะไหม้เหมียว 🔥",
+            "ถ้าเทรดแล้วกินไม่ได้นอนไม่หลับ แสดงว่าเสี่ยงเกินไปแล้ว 🛌",
+            "อย่ากลัวตกรถ ดีกว่าติดดอยหนาวๆ นะเหมียว 🏔️",
+            "วินัยคือสะพานเชื่อมระหว่างเป้าหมายกับความสำเร็จ 🌉",
+            "ตลาดมักจะทำร้ายคนที่มั่นใจเกินไปเสมอ 💔",
+            "จดบันทึกบ่อยๆ จะได้รู้ว่าตัวเองพลาดตรงไหน 📓"
+        ];
+
+        function randomizeQuote() {
+            const quoteEl = document.getElementById('catQuote');
+            const randomIndex = Math.floor(Math.random() * catQuotes.length);
+            quoteEl.style.opacity = 0;
+            setTimeout(() => {
+                quoteEl.innerText = catQuotes[randomIndex];
+                quoteEl.style.opacity = 1;
+                quoteEl.style.transition = 'opacity 0.3s ease-in-out';
+            }, 150);
+        }
 
         async function fetchInitialData() {
             try {
@@ -181,9 +409,11 @@
             } catch (error) {
                 console.error("โหลดข้อมูลผิดพลาด", error);
             } finally {
-                document.getElementById('loadingOverlay').style.display = 'none';
+                document.getElementById('loadingOverlay').style.opacity = '0';
+                setTimeout(() => { document.getElementById('loadingOverlay').style.display = 'none'; }, 300);
                 renderCalendar();
                 updateSummaryAndCharts();
+                randomizeQuote();
             }
         }
 
@@ -205,7 +435,7 @@
 
             for (let i = 0; i < firstDayIndex; i++) {
                 const emptyDiv = document.createElement('div');
-                emptyDiv.className = "rounded-2xl";
+                emptyDiv.className = "rounded-[12px]";
                 calendarDaysEl.appendChild(emptyDiv);
             }
 
@@ -213,38 +443,51 @@
                 const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 const dayDiv = document.createElement('div');
                 
-                let contentHTML = `<div class="flex justify-between items-start mb-0.5 md:mb-1"><span class="text-xs md:text-sm font-bold text-gray-600">${day}</span></div>`;
-                let baseClass = "p-1.5 md:p-2 border rounded-[10px] md:rounded-2xl flex flex-col cursor-pointer transition-all duration-200 overflow-hidden";
+                // COMPACT CELL DESIGN TO PREVENT TEXT CLIPPING
+                let contentHTML = `<div class="text-[10px] md:text-[11px] font-bold text-stone-400 leading-none">${day}</div>`;
+                let baseClass = "p-1 md:p-1.5 border rounded-[12px] md:rounded-[14px] flex flex-col cursor-pointer transition-all duration-200";
                 
                 if (tradeData[dateStr]) {
                     const data = tradeData[dateStr];
-                    const badgeColor = data.result === 'WIN' 
-                        ? 'bg-emerald-400/20 text-emerald-700 border-emerald-400/30' 
-                        : (data.result === 'LOSS' ? 'bg-rose-400/20 text-rose-700 border-rose-400/30' : 'bg-gray-400/20 text-gray-700 border-gray-400/30');
+                    let badgeColor, plClass, resultLabel;
+                    if(data.result === 'WIN') {
+                        badgeColor = 'bg-[#dcfce7] border-[#bbf7d0]'; 
+                        plClass = "text-emerald-600";
+                        resultLabel = '😸';
+                    } else if (data.result === 'LOSS') {
+                        badgeColor = 'bg-[#ffe4e6] border-[#fecdd3]'; 
+                        plClass = "text-rose-500";
+                        resultLabel = '😿';
+                    } else {
+                        badgeColor = 'bg-[#f5f5f4] border-[#e7e5e4]'; 
+                        plClass = "text-stone-500";
+                        resultLabel = '😼';
+                    }
                     
-                    const plClass = data.pl > 0 ? "text-emerald-600" : (data.pl < 0 ? "text-rose-600" : "text-gray-600");
                     const plText = data.pl > 0 ? `+${data.pl}` : `${data.pl}`;
-                    const resultLabel = data.result === 'WIN' ? 'W' : (data.result === 'LOSS' ? 'L' : '-');
                     
-                    dayDiv.className = `${baseClass} ${badgeColor}`;
+                    dayDiv.className = `${baseClass} ${badgeColor} hover:shadow-sm`;
                     contentHTML = `
-                        <div class="flex justify-between items-start mb-0.5 md:mb-1">
-                            <span class="text-xs md:text-sm font-bold text-inherit">${day}</span>
-                            <span class="text-[10px] px-1.5 py-0.5 rounded font-bold bg-white/50 backdrop-blur-sm">${resultLabel}</span>
+                        <div class="flex justify-between items-start leading-none mb-0.5">
+                            <span class="text-[10px] md:text-[11px] font-black text-stone-700">${day}</span>
+                            <span class="text-[10px] md:text-[12px] leading-none drop-shadow-sm">${resultLabel}</span>
                         </div>
-                        <div class="text-xs md:text-sm font-bold truncate mt-auto ${plClass}">${plText}</div>
+                        <div class="text-[9px] md:text-[11px] font-black truncate mt-auto ${plClass} text-center leading-none pb-0.5">${plText}</div>
                     `;
                 } else {
-                    dayDiv.className = `${baseClass} border-white/50 bg-white/30 hover:bg-white/50 backdrop-blur-sm`;
+                    dayDiv.className = `${baseClass} border-white bg-white/60 hover:bg-white backdrop-blur-sm`;
                 }
 
                 if(selectedDateStr === dateStr) {
-                    dayDiv.classList.add("ring-2", "ring-purple-600", "scale-[1.02]", "shadow-md");
-                    if(!tradeData[dateStr]) dayDiv.classList.add("border-transparent", "bg-white/60");
+                    dayDiv.classList.add("ring-[2.5px]", "ring-purple-400", "ring-offset-[1px]", "ring-offset-[#faf9fd]", "z-10");
+                    if(!tradeData[dateStr]) dayDiv.classList.add("bg-white", "border-purple-200");
                 }
 
                 dayDiv.innerHTML = contentHTML;
-                dayDiv.onclick = () => selectDate(dateStr);
+                dayDiv.onclick = () => {
+                    selectDate(dateStr);
+                    randomizeQuote();
+                };
                 calendarDaysEl.appendChild(dayDiv);
             }
         }
@@ -252,9 +495,8 @@
         function selectDate(dateStr) {
             selectedDateStr = dateStr;
             document.getElementById('selectedDate').value = dateStr;
-            document.getElementById('formTitle').innerText = `วันที่ ${dateStr}`;
+            document.getElementById('formTitle').innerText = `วันที่ ${dateStr} 🗓️`;
             
-            // Enable form elements
             document.getElementById('tradePL').disabled = false;
             document.getElementById('submitBtn').disabled = false;
             ['WIN', 'LOSS', 'EVEN'].forEach(r => document.getElementById(`btn-${r}`).disabled = false);
@@ -274,33 +516,31 @@
         function setTradeResult(result) {
             document.getElementById('tradeResult').value = result;
             
-            // Reset all buttons
             ['WIN', 'LOSS', 'EVEN'].forEach(r => {
                 const btn = document.getElementById(`btn-${r}`);
-                btn.className = "flex-1 py-2 text-xs font-bold rounded-xl transition-all duration-200 text-gray-500 hover:bg-white/50";
+                btn.className = "flex-1 py-2 md:py-2.5 text-xs font-bold rounded-[14px] transition-all duration-300 text-stone-500 hover:bg-white/80 border border-transparent";
             });
             
-            // Set active button
             const activeBtn = document.getElementById(`btn-${result}`);
             if (result === 'WIN') {
-                activeBtn.className = "flex-1 py-2 text-xs font-bold rounded-xl transition-all duration-200 bg-emerald-400 text-white shadow-sm";
+                activeBtn.className = "flex-1 py-2 md:py-2.5 text-xs font-bold rounded-[14px] transition-all duration-300 bg-[#86efac] text-emerald-900 shadow-sm border border-emerald-300 transform scale-[1.02]";
             } else if (result === 'LOSS') {
-                activeBtn.className = "flex-1 py-2 text-xs font-bold rounded-xl transition-all duration-200 bg-rose-400 text-white shadow-sm";
+                activeBtn.className = "flex-1 py-2 md:py-2.5 text-xs font-bold rounded-[14px] transition-all duration-300 bg-[#fda4af] text-rose-900 shadow-sm border border-rose-300 transform scale-[1.02]";
             } else {
-                activeBtn.className = "flex-1 py-2 text-xs font-bold rounded-xl transition-all duration-200 bg-gray-400 text-white shadow-sm";
+                activeBtn.className = "flex-1 py-2 md:py-2.5 text-xs font-bold rounded-[14px] transition-all duration-300 bg-[#d6d3d1] text-stone-800 shadow-sm border border-stone-300 transform scale-[1.02]";
             }
         }
 
         async function saveTradeData() {
             if (!selectedDateStr) {
-                alert("กรุณาเลือกวันที่บนปฏิทินก่อนครับ");
+                alert("จิ้มเลือกวันที่บนปฏิทินก่อนนะเหมียว! 🐾");
                 return;
             }
 
             const result = document.getElementById('tradeResult').value;
             const plVal = document.getElementById('tradePL').value;
             if(!plVal) {
-                alert("กรุณากรอกกำไร/ขาดทุน");
+                alert("อย่าลืมใส่จำนวนปลาทูนะเหมียว");
                 return;
             }
             let pl = parseFloat(plVal);
@@ -314,11 +554,12 @@
             }
 
             const btn = document.getElementById('submitBtn');
-            btn.innerHTML = `<div class="animate-spin rounded-full h-3.5 w-3.5 border-2 border-white border-t-transparent"></div> บันทึก`;
+            const originalBtnHtml = btn.innerHTML;
+            btn.innerHTML = `<div class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div> รอแป๊บนะ...`;
             btn.disabled = true;
 
             try {
-                // ส่ง action: 'save' ไปเพื่อให้ Apps Script รับทราบว่าเป็นการบันทึก (พร้อมส่ง Note ว่างๆ กลับไปเพื่อความเข้ากันได้)
+                // SCRIPT_URL call (Data structures untouched)
                 await fetch(SCRIPT_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -331,9 +572,9 @@
                 
             } catch (error) {
                 console.error(error);
-                alert("บันทึกข้อมูลล้มเหลว โปรดเช็คการตั้งค่า Web App");
+                alert("บันทึกไม่ลง! โปรดลองใหม่");
             } finally {
-                btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> บันทึก`;
+                btn.innerHTML = originalBtnHtml;
                 btn.disabled = false;
             }
         }
@@ -341,14 +582,13 @@
         async function deleteTradeData() {
             if (!selectedDateStr || !tradeData[selectedDateStr]) return;
             
-            if(!confirm(`ต้องการลบข้อมูลของวันที่ ${selectedDateStr} ใช่หรือไม่?`)) return;
+            if(!confirm(`จะลบข้อมูลของวันที่ ${selectedDateStr} ทิ้งจริงๆ หรอเหมียว? 😿`)) return;
 
             const delBtn = document.getElementById('deleteBtn');
             delBtn.disabled = true;
             delBtn.classList.add('opacity-50');
 
             try {
-                // ส่ง action: 'delete' ไปยัง Apps Script 
                 await fetch(SCRIPT_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -389,15 +629,15 @@
 
             const plEl = document.getElementById('totalPL');
             plEl.innerText = totalPL.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-            plEl.className = `text-lg font-black ${totalPL > 0 ? 'text-emerald-500' : (totalPL < 0 ? 'text-rose-500' : 'text-gray-800')}`;
+            plEl.className = `text-lg md:text-xl font-black leading-none mt-1 ${totalPL > 0 ? 'text-emerald-500' : (totalPL < 0 ? 'text-rose-500' : 'text-stone-700')}`;
             
             document.getElementById('winRate').innerText = `${winRate}%`;
             document.getElementById('winLossCount').innerText = `${wins} / ${losses}`;
             document.getElementById('totalDaysRecorded').innerText = `${Object.keys(tradeData).length} วัน`;
 
             // Charts
-            Chart.defaults.font.family = "'Inter', sans-serif";
-            Chart.defaults.color = '#6b7280';
+            Chart.defaults.font.family = "'Inter', 'Mali', sans-serif";
+            Chart.defaults.color = '#78716c';
             
             const ctxPL = document.getElementById('plChart');
             if (plChartInstance) plChartInstance.destroy();
@@ -407,8 +647,8 @@
                 let emptyDiv = document.getElementById('emptyPL');
                 if(!emptyDiv) {
                     emptyDiv = document.createElement('div');
-                    emptyDiv.className = 'absolute inset-0 flex items-center justify-center text-gray-400 text-sm font-medium';
-                    emptyDiv.innerText = 'ไม่มีข้อมูล';
+                    emptyDiv.className = 'absolute inset-0 flex items-center justify-center text-stone-400 text-xs font-bold';
+                    emptyDiv.innerText = 'แมวยังไม่ออกล่า';
                     emptyDiv.id = 'emptyPL';
                     ctxPL.parentElement.appendChild(emptyDiv);
                 }
@@ -416,19 +656,23 @@
                 ctxPL.style.display = 'block';
                 if(document.getElementById('emptyPL')) document.getElementById('emptyPL').remove();
                 
+                let gradient = ctxPL.getContext('2d').createLinearGradient(0, 0, 0, 200);
+                gradient.addColorStop(0, 'rgba(192, 132, 252, 0.4)');
+                gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+
                 plChartInstance = new Chart(ctxPL, {
                     type: 'line',
                     data: {
                         labels: chartLabels,
                         datasets: [{ 
-                            label: 'P/L สะสม', 
+                            label: 'ปลาทูสะสม', 
                             data: chartDataValues, 
-                            borderColor: '#9333ea', 
-                            backgroundColor: 'rgba(147, 51, 234, 0.1)', 
-                            borderWidth: 3,
+                            borderColor: '#a855f7', 
+                            backgroundColor: gradient, 
+                            borderWidth: 2.5,
                             pointRadius: 0,
                             pointHoverRadius: 5,
-                            pointBackgroundColor: '#9333ea',
+                            pointBackgroundColor: '#d8b4fe',
                             pointBorderColor: '#fff',
                             pointBorderWidth: 2,
                             fill: true, 
@@ -441,23 +685,24 @@
                         plugins: {
                             legend: { display: false },
                             tooltip: {
-                                backgroundColor: 'rgba(255,255,255,0.9)',
-                                titleColor: '#374151',
-                                bodyColor: '#9333ea',
-                                borderColor: '#e5e7eb',
+                                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                                titleColor: '#57534e',
+                                bodyColor: '#a855f7',
+                                borderColor: '#e7e5e4',
                                 borderWidth: 1,
-                                padding: 10,
+                                padding: 8,
                                 displayColors: false,
-                                titleFont: { size: 12 },
-                                bodyFont: { size: 14, weight: 'bold' }
+                                cornerRadius: 12,
+                                bodyFont: {size: 11},
+                                titleFont: {size: 10}
                             }
                         },
                         scales: {
                             x: { display: false },
                             y: { 
                                 border: { display: false },
-                                grid: { color: 'rgba(0,0,0,0.05)' },
-                                ticks: { font: { size: 10 } }
+                                grid: { color: 'rgba(231, 229, 228, 0.6)' },
+                                ticks: { font: { size: 9, weight: 'bold' } }
                             }
                         }
                     }
@@ -479,11 +724,12 @@
                 ratioChartInstance = new Chart(ctxRatio, {
                     type: 'doughnut',
                     data: { 
-                        labels: ['ชนะ (Win)', 'แพ้ (Loss)'], 
+                        labels: ['กำไร (Win)', 'ขาดทุน (Loss)'], 
                         datasets: [{ 
                             data: [wins, losses], 
-                            backgroundColor: ['#34d399', '#fb7185'],
-                            borderWidth: 0,
+                            backgroundColor: ['#86efac', '#fda4af'],
+                            borderWidth: 2,
+                            borderColor: '#ffffff',
                             hoverOffset: 4
                         }] 
                     },
@@ -494,12 +740,14 @@
                         plugins: {
                             legend: { display: false },
                             tooltip: {
-                                backgroundColor: 'rgba(255,255,255,0.9)',
-                                titleColor: '#374151',
-                                bodyColor: '#374151',
-                                borderColor: '#e5e7eb',
+                                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                                titleColor: '#57534e',
+                                bodyColor: '#57534e',
+                                borderColor: '#e7e5e4',
                                 borderWidth: 1,
-                                padding: 10
+                                padding: 8,
+                                cornerRadius: 10,
+                                bodyFont: {weight: 'bold', size: 10}
                             }
                         }
                     }
